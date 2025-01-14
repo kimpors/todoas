@@ -10,6 +10,7 @@
 #define DESC_MAX	USHRT_MAX
 
 struct task{
+	uint8_t index;
 	char name[TASKS_MAX][NAME_MAX]; 
 	char desc[TASKS_MAX][DESC_MAX];
 } tasks;
@@ -56,8 +57,9 @@ void save(void)
 		exit(-1);
 	}
 
-	fwrite(tasks.name, sizeof(char[NAME_MAX]), TASKS_MAX, fp);
-	fwrite(tasks.desc, sizeof(char[NAME_MAX]), TASKS_MAX, fp);
+	fwrite(&tasks.index, sizeof(uint8_t), 1, fp);
+	fwrite(tasks.name, sizeof(char[NAME_MAX]), tasks.index, fp);
+	fwrite(tasks.desc, sizeof(char[DESC_MAX]), tasks.index, fp);
 	fclose(fp);
 }
 
@@ -69,7 +71,8 @@ void load(void)
 		exit(-1);
 	}
 
-	fread(tasks.name, sizeof(char[NAME_MAX]), TASKS_MAX, fp);
-	fread(tasks.desc, sizeof(char[DESC_MAX]), TASKS_MAX, fp);
+	fread(&tasks.index, sizeof(uint8_t), 1, fp);
+	fread(tasks.name, sizeof(char[NAME_MAX]), tasks.index, fp);
+	fread(tasks.desc, sizeof(char[DESC_MAX]), tasks.index, fp);
 	fclose(fp);
 }
