@@ -1,0 +1,3 @@
+[submodule "cmdio"]
+	path = cmdio
+	url = https://github.com/kimpors/cmdio.git

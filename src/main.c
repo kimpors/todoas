@@ -1,10 +1,12 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/stat.h>
+#include "cmdio.h"
 
 #define TASKS_MAX 	UCHAR_MAX
 #define DESC_MAX	USHRT_MAX
@@ -15,10 +17,13 @@ struct task{
 	char desc[TASKS_MAX][DESC_MAX];
 } tasks;
 
+static char sbuf[DESC_MAX];
 static char path[PATH_MAX];
 
-void save(void);
-void load(void);
+void tksave(void);
+void tkload(void);
+char *tkgetline(uint16_t lim);
+void tkadd(char *name, char *desc);
 
 int main(void)
 {
@@ -37,19 +42,83 @@ int main(void)
 	}
 
 	strcat(path, "/data.bin");
-	printf("path: %s\n", path);
 
-	strcpy(tasks.name[0], "hello");
-	strcpy(tasks.desc[0], "say hello to everyone");
-	save();
 
-	load();
-	printf("name: %s\n", tasks.name[0]);
-	printf("desc: %s\n", tasks.desc[0]);
+	// tasks.index = 1;
+	// strcpy(tasks.name[0], "hello");
+	// strcpy(tasks.desc[0], "say hello");
+	// tksave();
+	tkload();
+
+	char ch;
+	char name_arg[NAME_MAX];
+	char desc_arg[DESC_MAX];
+
+	coclear();
+	do
+	{
+		for (size_t i = 0; i < tasks.index; i++)
+		{
+			printf("%s\t", tasks.name[i]);
+			printf("%s\n", tasks.desc[i]);
+		}
+
+		printf("\n\n\n[Q]uit [A]dd\n");
+		scanf("%c", &ch);
+		coclear();
+
+		switch(ch)
+		{
+			case 'a':
+				system("clear");
+
+				printf("name: ");
+				scanf("%[^\n]%*c", name_arg);
+				scanf("%[^\n]%*c", desc_arg);
+
+				// strcpy(name_arg, tkgetline(NAME_MAX));
+				//
+				// printf("desc: ");
+				// strcpy(desc_arg, tkgetline(DESC_MAX));
+
+				tkadd(name_arg, desc_arg);
+				break;
+		}
+	} while (ch != 'q');
+
+	tksave();
 	return 0;
 }
 
-void save(void)
+char *tkgetline(uint16_t lim)
+{
+	int ch;
+	size_t i;
+
+	for (i = 0; i < lim; i++)
+	{
+		ch = getchar();
+
+		if (ch == EOF || ch == '\n')
+		{
+			break;
+		}
+
+		sbuf[i] = ch;
+	}
+
+	sbuf[i] = '\0';
+	return sbuf;
+}
+
+void tkadd(char *name, char *desc)
+{
+	strcpy(tasks.name[tasks.index], name);
+	strcpy(tasks.desc[tasks.index], desc);
+	tasks.index++;
+}
+
+void tksave(void)
 {
 	FILE *fp;
 	if (!(fp = fopen(path, "wb"))) {
@@ -63,7 +132,7 @@ void save(void)
 	fclose(fp);
 }
 
-void load(void)
+void tkload(void)
 {
 	FILE *fp;
 	if (!(fp = fopen(path, "rb"))) {
