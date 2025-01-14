@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/stat.h>
+#include "cmdio.h"
 
 #define TASKS_MAX 	UCHAR_MAX
 #define DESC_MAX	USHRT_MAX
@@ -15,10 +17,13 @@ struct task{
 	char desc[TASKS_MAX][DESC_MAX];
 } tasks;
 
+static char sbuf[DESC_MAX];
 static char path[PATH_MAX];
 
-void save(void);
-void load(void);
+void tksave(void);
+void tkload(void);
+void tkadd(const char *name, const char *desc);
+char *tkgetline(uint8_t lim);
 
 int main(void)
 {
@@ -37,19 +42,83 @@ int main(void)
 	}
 
 	strcat(path, "/data.bin");
-	printf("path: %s\n", path);
 
-	strcpy(tasks.name[0], "hello");
-	strcpy(tasks.desc[0], "say hello to everyone");
-	save();
+	// strcpy(tasks.name[0], "hello");
+	// strcpy(tasks.desc[0], "say hello to everyone");
+	// save();
 
-	load();
-	printf("name: %s\n", tasks.name[0]);
-	printf("desc: %s\n", tasks.desc[0]);
+	tkload();
+
+	int ch;
+	char name_arg[NAME_MAX];
+	char desc_arg[DESC_MAX];
+
+	size_t name_max = NAME_MAX;
+	size_t desc_max = DESC_MAX;
+
+	coclear();
+	do
+	{
+		for (int i = 0; i < tasks.index; i++)
+		{
+			printf("%s\t", tasks.name[i]);
+			printf("%s\n", tasks.desc[i]);
+		}
+
+		printf("\n\n\n[Q]uit A[dd]\n");
+
+		switch(ch = getchar())
+		{
+			case 'a':
+				getchar();
+				coclear();
+				printf("name: ");
+				strcpy(name_arg, tkgetline(NAME_MAX));
+
+				printf("desc: ");
+				strcpy(desc_arg, tkgetline(DESC_MAX));
+
+				tkadd(name_arg, desc_arg);
+				break;
+		}
+
+		coclear();
+	} while (ch != 'q');
+
+	tksave();
 	return 0;
 }
 
-void save(void)
+char *tkgetline(uint8_t lim)
+{
+	int ch;
+	uint8_t i;
+
+	for (i = 0; i < lim; i++)
+	{
+		ch = getchar();
+
+		if (ch == '\n' || ch == EOF)
+		{
+			break;
+		}
+
+		sbuf[i] = ch;
+	}
+
+	sbuf[i] = '\0';
+	return sbuf;
+}
+
+
+void tkadd(const char *name, const char *desc)
+{
+	strcpy(tasks.name[tasks.index], name);
+	strcpy(tasks.desc[tasks.index], desc);
+	tasks.index++;
+}
+
+void tksave(void)
 {
 	FILE *fp;
 	if (!(fp = fopen(path, "wb"))) {
@@ -63,7 +132,7 @@ void save(void)
 	fclose(fp);
 }
 
-void load(void)
+void tkload(void)
 {
 	FILE *fp;
 	if (!(fp = fopen(path, "rb"))) {
