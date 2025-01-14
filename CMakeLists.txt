@@ -5,3 +5,8 @@ set(C_STANDARD 23)
 
 add_executable(${PROJECT_NAME} src/main.c)
 target_include_directories(${PROJECT_NAME} PUBLIC include)
+
+add_subdirectory(cmdio)
+include_directories(${CMAKE_SOURCE_DIR}/cmdio)
+target_link_libraries(${PROJECT_NAME} cmdio)
+
