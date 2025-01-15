@@ -3,15 +3,17 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/stat.h>
 #include "cmdio.h"
+#include "list.h"
 
 #define TASKS_MAX 	UCHAR_MAX
 #define DESC_MAX	USHRT_MAX
 
-struct task{
+struct {
 	uint8_t index;
 	char name[TASKS_MAX][NAME_MAX]; 
 	char desc[TASKS_MAX][DESC_MAX];
@@ -23,7 +25,7 @@ static char path[PATH_MAX];
 void tksave(void);
 void tkload(void);
 char *tkgetline(uint16_t lim);
-void tkadd(char *name, char *desc);
+void tkadd(const char *name, const char *desc);
 
 int main(void)
 {
@@ -43,47 +45,45 @@ int main(void)
 
 	strcat(path, "/data.bin");
 
-
-	// tasks.index = 1;
-	// strcpy(tasks.name[0], "hello");
-	// strcpy(tasks.desc[0], "say hello");
-	// tksave();
 	tkload();
 
-	char ch;
+	int ch;
+	uint8_t index;
 	char name_arg[NAME_MAX];
 	char desc_arg[DESC_MAX];
+
+	size_t name_max = NAME_MAX;
+	size_t desc_max = DESC_MAX;
 
 	coclear();
 	do
 	{
-		for (size_t i = 0; i < tasks.index; i++)
+		for (int i = 0; i < tasks.index; i++)
 		{
 			printf("%s\t", tasks.name[i]);
 			printf("%s\n", tasks.desc[i]);
 		}
 
-		printf("\n\n\n[Q]uit [A]dd\n");
-		scanf("%c", &ch);
-		coclear();
+		printf("\n\n\n[Q]uit A[dd] C[lear]\n");
 
-		switch(ch)
+		switch(ch = cogetch())
 		{
 			case 'a':
-				system("clear");
-
+				cogetch();
+				coclear();
 				printf("name: ");
-				scanf("%[^\n]%*c", name_arg);
-				scanf("%[^\n]%*c", desc_arg);
+				strcpy(name_arg, tkgetline(NAME_MAX));
 
-				// strcpy(name_arg, tkgetline(NAME_MAX));
-				//
-				// printf("desc: ");
-				// strcpy(desc_arg, tkgetline(DESC_MAX));
+				printf("desc: ");
+				strcpy(desc_arg, tkgetline(DESC_MAX));
 
 				tkadd(name_arg, desc_arg);
 				break;
+			case 'c':
+				tasks.index = 0;
+				break;
 		}
+		coclear();
 	} while (ch != 'q');
 
 	tksave();
@@ -93,13 +93,13 @@ int main(void)
 char *tkgetline(uint16_t lim)
 {
 	int ch;
-	size_t i;
+	uint8_t i;
 
 	for (i = 0; i < lim; i++)
 	{
 		ch = getchar();
 
-		if (ch == EOF || ch == '\n')
+		if (ch == '\n' || ch == EOF)
 		{
 			break;
 		}
@@ -111,7 +111,8 @@ char *tkgetline(uint16_t lim)
 	return sbuf;
 }
 
-void tkadd(char *name, char *desc)
+
+void tkadd(const char *name, const char *desc)
 {
 	strcpy(tasks.name[tasks.index], name);
 	strcpy(tasks.desc[tasks.index], desc);
