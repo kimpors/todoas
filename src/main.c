@@ -7,11 +7,12 @@
 #include <pwd.h>
 #include <sys/stat.h>
 #include "cmdio.h"
+#include "list.h"
 
 #define TASKS_MAX 	UCHAR_MAX
 #define DESC_MAX	USHRT_MAX
 
-struct task{
+struct {
 	uint8_t index;
 	char name[TASKS_MAX][NAME_MAX]; 
 	char desc[TASKS_MAX][DESC_MAX];
@@ -22,8 +23,8 @@ static char path[PATH_MAX];
 
 void tksave(void);
 void tkload(void);
+char *tkgetline(uint16_t lim);
 void tkadd(const char *name, const char *desc);
-char *tkgetline(uint8_t lim);
 
 int main(void)
 {
@@ -43,13 +44,10 @@ int main(void)
 
 	strcat(path, "/data.bin");
 
-	// strcpy(tasks.name[0], "hello");
-	// strcpy(tasks.desc[0], "say hello to everyone");
-	// save();
-
 	tkload();
 
 	int ch;
+	uint8_t index;
 	char name_arg[NAME_MAX];
 	char desc_arg[DESC_MAX];
 
@@ -65,12 +63,12 @@ int main(void)
 			printf("%s\n", tasks.desc[i]);
 		}
 
-		printf("\n\n\n[Q]uit A[dd]\n");
+		printf("\n\n\n[Q]uit A[dd] C[lear]\n");
 
-		switch(ch = getchar())
+		switch(ch = cogetch())
 		{
 			case 'a':
-				getchar();
+				cogetch();
 				coclear();
 				printf("name: ");
 				strcpy(name_arg, tkgetline(NAME_MAX));
@@ -80,8 +78,10 @@ int main(void)
 
 				tkadd(name_arg, desc_arg);
 				break;
+			case 'c':
+				tasks.index = 0;
+				break;
 		}
-
 		coclear();
 	} while (ch != 'q');
 
@@ -89,7 +89,7 @@ int main(void)
 	return 0;
 }
 
-char *tkgetline(uint8_t lim)
+char *tkgetline(uint16_t lim)
 {
 	int ch;
 	uint8_t i;
