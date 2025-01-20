@@ -14,7 +14,7 @@
 #define DESC_MAX	USHRT_MAX
 
 struct {
-	uint8_t index;
+	uint8_t len;
 	char name[TASKS_MAX][NAME_MAX]; 
 	char desc[TASKS_MAX][DESC_MAX];
 } tasks;
@@ -45,6 +45,13 @@ int main(void)
 
 	strcat(path, "/data.bin");
 
+	FILE *fp;
+	if (!(fp = fopen(path, "r")))
+	{
+		fclose(fopen(path, "w"));
+	}
+	fclose(fp);
+
 	tkload();
 
 	int ch;
@@ -52,13 +59,10 @@ int main(void)
 	char name_arg[NAME_MAX];
 	char desc_arg[DESC_MAX];
 
-	size_t name_max = NAME_MAX;
-	size_t desc_max = DESC_MAX;
-
 	coclear();
 	do
 	{
-		for (int i = 0; i < tasks.index; i++)
+		for (int i = 0; i < tasks.len; i++)
 		{
 			printf("%s\t", tasks.name[i]);
 			printf("%s\n", tasks.desc[i]);
@@ -80,7 +84,7 @@ int main(void)
 				tkadd(name_arg, desc_arg);
 				break;
 			case 'c':
-				tasks.index = 0;
+				tasks.len = 0;
 				break;
 		}
 		coclear();
@@ -114,9 +118,9 @@ char *tkgetline(uint16_t lim)
 
 void tkadd(const char *name, const char *desc)
 {
-	strcpy(tasks.name[tasks.index], name);
-	strcpy(tasks.desc[tasks.index], desc);
-	tasks.index++;
+	strcpy(tasks.name[tasks.len], name);
+	strcpy(tasks.desc[tasks.len], desc);
+	tasks.len++;
 }
 
 void tksave(void)
@@ -127,9 +131,9 @@ void tksave(void)
 		exit(-1);
 	}
 
-	fwrite(&tasks.index, sizeof(uint8_t), 1, fp);
-	fwrite(tasks.name, sizeof(char[NAME_MAX]), tasks.index, fp);
-	fwrite(tasks.desc, sizeof(char[DESC_MAX]), tasks.index, fp);
+	fwrite(&tasks.len, sizeof(uint8_t), 1, fp);
+	fwrite(tasks.name, sizeof(char[NAME_MAX]), tasks.len, fp);
+	fwrite(tasks.desc, sizeof(char[DESC_MAX]), tasks.len, fp);
 	fclose(fp);
 }
 
@@ -141,8 +145,8 @@ void tkload(void)
 		exit(-1);
 	}
 
-	fread(&tasks.index, sizeof(uint8_t), 1, fp);
-	fread(tasks.name, sizeof(char[NAME_MAX]), tasks.index, fp);
-	fread(tasks.desc, sizeof(char[DESC_MAX]), tasks.index, fp);
+	fread(&tasks.len, sizeof(uint8_t), 1, fp);
+	fread(tasks.name, sizeof(char[NAME_MAX]), tasks.len, fp);
+	fread(tasks.desc, sizeof(char[DESC_MAX]), tasks.len, fp);
 	fclose(fp);
 }
